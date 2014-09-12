@@ -53,9 +53,11 @@ class Export:
 		for this_dict in self.all_fontinfos:
 			row_string = ''
 			for head_column in self.csv_head_list:
-				row_string += '"' + this_dict[head_column] + '",'
+				escaped_string = this_dict[head_column].replace('"', '""').replace('\n\n', '\n')
+				row_string += '"' + escaped_string + '",'
 
 			# Append without trailing comma
+			print row_string
 			content_list.append(row_string.rstrip(','))
 
 		return content_list
