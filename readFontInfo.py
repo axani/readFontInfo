@@ -72,9 +72,14 @@ class Export:
 
 
 
-fontfolder = 'fonts2read'
-fontlist = ['SourceCodePro-Regular.otf']
 export_filename = 'fontinfos.csv'
+fontfolder = 'fonts2read'
+fontlist = []
+
+for f in os.listdir(fontfolder):
+	if f.endswith('.otf') or f.endswith('.ttf'):
+		fontlist.append(f)
+
 all_fontinfos = []
 
 for font in fontlist:
