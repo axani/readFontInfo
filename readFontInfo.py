@@ -5,17 +5,54 @@ def getFontInfo(fontfile):
 	font = TTFont(fontfile)
 
 	fontinfo_dict = {}
-	fontinfo_dict['fullfontname']	= font['name'].names[4].string
-	fontinfo_dict['font_family']	= font['name'].names[1].string
-	fontinfo_dict['font_subfamily']	= font['name'].names[2].string
-	fontinfo_dict['designer']		= font['name'].names[10].string
-	fontinfo_dict['designer_url']	= font['name'].names[12].string
-	fontinfo_dict['manufacturer']	= font['name'].names[8].string
-	fontinfo_dict['vendor_url']		= font['name'].names[11].string
-	fontinfo_dict['trademark']		= font['name'].names[7].string
-	fontinfo_dict['copyright']		= font['name'].names[0].string
-	fontinfo_dict['license_descr']	= font['name'].names[13].string
-	fontinfo_dict['license_url']	= font['name'].names[14].string
+	try:
+		fontinfo_dict['fullfontname']	= font['name'].getName(4,1,0).string
+	except:
+		fontinfo_dict['fullfontname']	= ''
+	try:
+		fontinfo_dict['font_family']	= font['name'].getName(1,1,0).string
+	except:
+		fontinfo_dict['font_family']	= ''
+	try:
+		fontinfo_dict['font_subfamily']	= font['name'].getName(2,1,0).string
+	except:
+		fontinfo_dict['font_subfamily']	= ''
+	try:
+		fontinfo_dict['postscript_name']= font['name'].getName(6,1,0).string
+	except:
+		fontinfo_dict['postscript_name']= ''
+	try:
+		fontinfo_dict['designer']		= font['name'].getName(9,1,0).string
+	except:
+		fontinfo_dict['designer']		= ''
+	try:
+		fontinfo_dict['designer_url']	= font['name'].getName(12,1,0).string
+	except:
+		fontinfo_dict['designer_url']	= ''
+	try:
+		fontinfo_dict['manufacturer']	= font['name'].getName(8,1,0).string
+	except:
+		fontinfo_dict['manufacturer']	= ''
+	try:
+		fontinfo_dict['vendor_url']		= font['name'].getName(11,1,0).string
+	except:
+		fontinfo_dict['vendor_url']		= ''
+	try:
+		fontinfo_dict['trademark']		= font['name'].getName(7,1,0).string
+	except:
+		fontinfo_dict['trademark']		= ''
+	try:
+		fontinfo_dict['copyright']		= font['name'].getName(14,1,0).string
+	except:
+		fontinfo_dict['copyright']		= ''
+	try:
+		fontinfo_dict['license_descr']	= font['name'].getName(13,1,0).string
+	except:
+		fontinfo_dict['license_descr']	= ''
+	try:
+		fontinfo_dict['license_url']	= font['name'].getName(14,1,0).string
+	except:
+		fontinfo_dict['license_url']	= ''
 	return fontinfo_dict
 
 class Export:
@@ -37,6 +74,7 @@ class Export:
 			'fullfontname',
 			'font_family',
 			'font_subfamily',
+			'postscript_name',
 			'designer',
 			'designer_url',
 			'manufacturer',
@@ -53,7 +91,7 @@ class Export:
 		for this_dict in self.all_fontinfos:
 			row_string = ''
 			for head_column in self.csv_head_list:
-				escaped_string = this_dict[head_column].replace('"', '""').replace('\n\n', '\n')
+				escaped_string = this_dict[head_column].replace('"', '\'').replace('\r','').replace('\n', '')
 				row_string += '"' + escaped_string + '",'
 
 			# Append without trailing comma
