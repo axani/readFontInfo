@@ -8,10 +8,12 @@ class GetFontInfo:
 		self.font = TTFont(fontpath)
 
 		# Add data
-		#self.getNameInfo()
-		self.getOtherInfo()
+		self.getNameInfo()
+		self.getOTInfo()
+		self.getCustomInfo()
 
 	def getNameInfo(self):
+		self.fontinfo_dict['namerecord'] = {}
 		self.addInfo('fullfontname', self.font['name'].getName(4,1,0))
 		self.addInfo('font_family', self.font['name'].getName(1,1,0))
 		self.addInfo('font_subfamily', self.font['name'].getName(2,1,0))
@@ -25,7 +27,7 @@ class GetFontInfo:
 		self.addInfo('license_descr', self.font['name'].getName(13,1,0))
 		self.addInfo('license_url', self.font['name'].getName(14,1,0))
 
-	def getOtherInfo(self):
+	def getOTInfo(self):
 		#self.fontinfo_dict['glyphCount'] = len(self.font.getGlyphOrder())
 		self.fontinfo_dict['maxp'] = {'numGlyphs': self.font['maxp'].numGlyphs}
 		
@@ -33,6 +35,24 @@ class GetFontInfo:
 		for feat in self.font['GSUB'].table.FeatureList.FeatureRecord:
 			if feat.FeatureTag not in self.fontinfo_dict['featuretags']:
 				self.fontinfo_dict['featuretags'].append(feat.FeatureTag)
+
+		self.fontinfo_dict['cmap'] = {}
+		# for cmap_table in self.font['cmap'].tables:
+		# 	if cmap_table.cmap:
+		# 		for (i, code) in enumerate(cmap_table.cmap):
+		# 			## ? - was ist der Unterschied zu getnames?
+		# 			print code, cmap_table.cmap[code]
+		
+		#self.fontinfo_dict['glyphs'] = self.font.getGlyphOrder()
+
+		self.fontinfo_dict['glyph_data'] = {}
+		for glyphname in self.font['hmtx'].metrics:
+			## Add leftsiedebearing, width and rightsidebearing
+			glyphdata = {}
+			glyphdata['name'] = glyphname
+			glyphdata['width'] = self.font['hmtx'].metrics[glyphname][0]
+			glyphdata['leftSideBearing'] = self.font['hmtx'].metrics[glyphname][1]
+			self.fontinfo_dict['glyph_data'][glyphname] = glyphdata
 
 		self.fontinfo_dict['head'] = {
 			'unitsPerEm': self.font['head'].unitsPerEm,
@@ -124,12 +144,53 @@ class GetFontInfo:
 
 		#self.fontinfo_dict['glyphnames'] = self.font.getGlyphOrder()
 
+	def getCustomInfo(self):
+		self.fontinfo_dict['custom'] = {}
+
+		ratio_raw = float(self.fontinfo_dict['os2']['sCapHeight']) / float(self.fontinfo_dict['os2']['sxHeight'])
+		self.fontinfo_dict['custom']['xHratio'] = ratio_raw
+
+		self.fontinfo_dict['custom']['classification'] = self.getSerifStyle()
+
+
+	def getSerifStyle(self):
+		returnString = '';
+		serifStyleID = self.fontinfo_dict['os2_panose']['bSerifStyle']
+		serifIDs = [2,3,4,5,6,7,8,9,10]
+		sansIDs = [11,12,13]
+		otherIDs = [14,15]
+
+		if serifStyleID in serifIDs:
+			returnString = 'Serif'
+
+		elif serifStyleID in sansIDs:
+			returnString = 'Sans-Serif'
+
+		elif serifStyleID in otherIDs:
+			returnString = 'Other'
+
+		else:
+			returnString = '_undefined'
+
+		# Last Check: Even if it has a serif-style it could be Monospace
+		w1 = self.fontinfo_dict['glyph_data']['i']['width']
+		w2 = self.fontinfo_dict['glyph_data']['W']['width']
+		w3 = self.fontinfo_dict['glyph_data']['o']['width']
+		w4 = self.fontinfo_dict['glyph_data']['M']['width']
+		w5 = self.fontinfo_dict['glyph_data']['n']['width']
+		w6 = self.fontinfo_dict['glyph_data']['m']['width']
+
+		if w1 == w2 and w2 == w3 and w3 == w4 and w4 == w5 and w5 == w6:
+			returnString = 'Monospace'
+
+		return returnString;
+
 
 	def addInfo(self, dictionary_key, font_object):
 		try:
-			self.fontinfo_dict[dictionary_key]	= font_object.string
+			self.fontinfo_dict['namerecord'][dictionary_key]	= font_object.string
 		except:
-			self.fontinfo_dict[dictionary_key]	= ''
+			self.fontinfo_dict['namerecord'][dictionary_key]	= ''
 
 class Export:
 	def __init__(self, all_fontinfos):
