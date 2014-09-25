@@ -1,5 +1,7 @@
 import os
 import pprint
+import datetime
+import json
 from fontTools.ttLib import TTFont
 
 class GetFontInfo:
@@ -8,9 +10,25 @@ class GetFontInfo:
 		self.font = TTFont(fontpath)
 
 		# Add data
+		self.getFileInfo(fontpath)
 		self.getNameInfo()
 		self.getOTInfo()
 		self.getCustomInfo()
+
+		## Add supported languages
+		## Test JSON dump
+		## Eventually this does not need to get all in one json file, but one for each font
+
+	def getFileInfo(self, fontpath):
+		self.fontinfo_dict['file'] = {}
+		filename_full = os.path.basename(fontpath)
+		self.fontinfo_dict['file']['filename_full'] = filename_full
+		self.fontinfo_dict['file']['filename'] = os.path.splitext(filename_full)[0]
+		self.fontinfo_dict['file']['filetype'] = os.path.splitext(filename_full)[1].lower()
+		self.fontinfo_dict['file']['css_snippet'] = "@font-face {font-family: '%s';src: url('fonts/%s') format('opentype');}" % (self.fontinfo_dict['file']['filename'], filename_full)
+		self.fontinfo_dict['file']['added'] = str(datetime.datetime.now())
+		print os.path.splitext(filename_full)[0]
+
 
 	def getNameInfo(self):
 		self.fontinfo_dict['namerecord'] = {}
@@ -35,15 +53,6 @@ class GetFontInfo:
 		for feat in self.font['GSUB'].table.FeatureList.FeatureRecord:
 			if feat.FeatureTag not in self.fontinfo_dict['featuretags']:
 				self.fontinfo_dict['featuretags'].append(feat.FeatureTag)
-
-		self.fontinfo_dict['cmap'] = {}
-		# for cmap_table in self.font['cmap'].tables:
-		# 	if cmap_table.cmap:
-		# 		for (i, code) in enumerate(cmap_table.cmap):
-		# 			## ? - was ist der Unterschied zu getnames?
-		# 			print code, cmap_table.cmap[code]
-		
-		#self.fontinfo_dict['glyphs'] = self.font.getGlyphOrder()
 
 		self.fontinfo_dict['glyph_data'] = {}
 		for glyphname in self.font['hmtx'].metrics:
@@ -199,6 +208,10 @@ class Export:
 
 	def console(self):
 		pprint.pprint(all_fontinfos)
+
+	def exportJSON(self):
+		json_file = open('data.json', 'wb')
+		json.dump(all_fontinfos, json_file)
 
 
 	def CSV(self):
