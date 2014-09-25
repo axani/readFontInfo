@@ -1,64 +1,53 @@
 import os
+import pprint
 from fontTools.ttLib import TTFont
 
-def getFontInfo(fontfile):
-	font = TTFont(fontfile)
+class GetFontInfo:
+	def __init__(self, fontpath):
+		self.fontinfo_dict = {}
+		self.font = TTFont(fontpath)
 
-	fontinfo_dict = {}
-	try:
-		fontinfo_dict['fullfontname']	= font['name'].getName(4,1,0).string
-	except:
-		fontinfo_dict['fullfontname']	= ''
-	try:
-		fontinfo_dict['font_family']	= font['name'].getName(1,1,0).string
-	except:
-		fontinfo_dict['font_family']	= ''
-	try:
-		fontinfo_dict['font_subfamily']	= font['name'].getName(2,1,0).string
-	except:
-		fontinfo_dict['font_subfamily']	= ''
-	try:
-		fontinfo_dict['postscript_name']= font['name'].getName(6,1,0).string
-	except:
-		fontinfo_dict['postscript_name']= ''
-	try:
-		fontinfo_dict['designer']		= font['name'].getName(9,1,0).string
-	except:
-		fontinfo_dict['designer']		= ''
-	try:
-		fontinfo_dict['designer_url']	= font['name'].getName(12,1,0).string
-	except:
-		fontinfo_dict['designer_url']	= ''
-	try:
-		fontinfo_dict['manufacturer']	= font['name'].getName(8,1,0).string
-	except:
-		fontinfo_dict['manufacturer']	= ''
-	try:
-		fontinfo_dict['vendor_url']		= font['name'].getName(11,1,0).string
-	except:
-		fontinfo_dict['vendor_url']		= ''
-	try:
-		fontinfo_dict['trademark']		= font['name'].getName(7,1,0).string
-	except:
-		fontinfo_dict['trademark']		= ''
-	try:
-		fontinfo_dict['copyright']		= font['name'].getName(14,1,0).string
-	except:
-		fontinfo_dict['copyright']		= ''
-	try:
-		fontinfo_dict['license_descr']	= font['name'].getName(13,1,0).string
-	except:
-		fontinfo_dict['license_descr']	= ''
-	try:
-		fontinfo_dict['license_url']	= font['name'].getName(14,1,0).string
-	except:
-		fontinfo_dict['license_url']	= ''
-	return fontinfo_dict
+		# Add data
+		#self.getNameInfo()
+		self.getOtherInfo()
+
+	def getNameInfo(self):
+		self.addInfo('fullfontname', self.font['name'].getName(4,1,0))
+		self.addInfo('font_family', self.font['name'].getName(1,1,0))
+		self.addInfo('font_subfamily', self.font['name'].getName(2,1,0))
+		self.addInfo('postscript_name', self.font['name'].getName(6,1,0))
+		self.addInfo('designer', self.font['name'].getName(9,1,0))
+		self.addInfo('designer_url', self.font['name'].getName(12,1,0))
+		self.addInfo('manufacturer', self.font['name'].getName(8,1,0))
+		self.addInfo('vendor_url', self.font['name'].getName(11,1,0))
+		self.addInfo('trademark', self.font['name'].getName(7,1,0))
+		self.addInfo('copyright', self.font['name'].getName(14,1,0))
+		self.addInfo('license_descr', self.font['name'].getName(13,1,0))
+		self.addInfo('license_url', self.font['name'].getName(14,1,0))
+
+	def getOtherInfo(self):
+		self.fontinfo_dict['glyphCount'] = len(self.font.getGlyphOrder())
+		
+		self.fontinfo_dict['featuretags'] = []
+		for feat in self.font['GSUB'].table.FeatureList.FeatureRecord:
+			if feat.FeatureTag not in self.fontinfo_dict['featuretags']:
+				self.fontinfo_dict['featuretags'].append(feat.FeatureTag)
+				print feat.FeatureTag
+		#self.fontinfo_dict['glyphnames'] = self.font.getGlyphOrder()
+
+	def addInfo(self, dictionary_key, font_object):
+		try:
+			self.fontinfo_dict[dictionary_key]	= font_object.string
+		except:
+			self.fontinfo_dict[dictionary_key]	= ''
 
 class Export:
 	def __init__(self, all_fontinfos):
 		self.all_fontinfos = all_fontinfos
 		print 'Exporting to', export_filename, '...'
+
+	def console(self):
+		pprint.pprint(all_fontinfos)
 
 
 	def CSV(self):
@@ -122,7 +111,9 @@ all_fontinfos = []
 
 for font in fontlist:
 	path = os.path.join(fontfolder, font)
-	all_fontinfos.append(getFontInfo(path))
+	f = GetFontInfo(path)
+	all_fontinfos.append(f.fontinfo_dict)
 
 exportdata = Export(all_fontinfos)
-exportdata.CSV()
+exportdata.console()
+#exportdata.CSV()
